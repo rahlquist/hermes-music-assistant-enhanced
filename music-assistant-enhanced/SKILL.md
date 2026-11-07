@@ -1,6 +1,7 @@
 ---
 name: music-assistant-enhanced
 description: Control Music Assistant (Home Assistant music server) - playback, volume, queue management, and library search. Use when user wants to play/pause music, skip tracks, adjust volume, search their music library, check what's playing, manage the queue, or control any Music Assistant player. Works with Spotify, Plex, local files, and other music providers integrated with Music Assistant.
+category: media
 metadata:
   openclaw:
     requires:
