@@ -69,6 +69,11 @@ Or clone and copy `music-assistant-enhanced/` into `~/.hermes/skills/`.
 # Multi-room
 ./scripts/mactl.py group <target_player_id>
 ./scripts/mactl.py transfer <target_player_id>
+
+# Announcements (interrupts current playback, then resumes)
+./scripts/mactl.py announce "Hello world"            # Speak via TTS
+./scripts/mactl.py announce --url <audio_url>         # Play audio file
+./scripts/mactl.py announce "Hi" --volume 80          # With volume
 ```
 
 ## Files
