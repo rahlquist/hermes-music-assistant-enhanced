@@ -33,7 +33,7 @@ library (WebSocket) because the REST `music/search` and `player_queues/play_medi
 endpoints return 500 on some MA versions. Install it:
 
 ```bash
-pip install music-assistant-client
+python3 -m pip install music-assistant-client
 ```
 
 **Pitfall:** `MA_URL` must include the `/api` suffix (e.g. `http://HOST:8095/api`). Users often paste the bare web-UI URL (`http://HOST:8095/`); append `/api` before saving or every request 404s.
@@ -168,6 +168,20 @@ pip install music-assistant-client
 ./scripts/mactl.py ungroup                # Ungroup player
 ./scripts/mactl.py transfer <target>       # Transfer playback to target player
 ```
+
+## Voice Command Examples (Hermes Gadget)
+
+| User says | Run |
+|-----------|-----|
+| "Play some Nirvana" | `mactl.py play-search "nirvana"` |
+| "What's playing?" | `mactl.py status` |
+| "Skip this track" | `mactl.py next` |
+| "Set volume to 50%" | `mactl.py volume 50` |
+| "Turn on shuffle" | `mactl.py shuffle true` |
+| "What's in the queue?" | `mactl.py queue` |
+| "Play my favorites" | `mactl.py play-search "favorites"` |
+
+**Flags:** `--json` for machine-readable output (gadgets/agents), `--quiet` to suppress confirmations.
 
 ## Direct API Access
 

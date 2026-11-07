@@ -22,6 +22,33 @@ MA_URL = os.environ.get("MA_URL", "")
 MA_TOKEN = os.environ.get("MA_TOKEN", "")
 MA_PLAYER = os.environ.get("MA_PLAYER", "")
 
+# Global output flags (stripped from argv before argparse)
+JSON_MODE = "--json" in sys.argv
+QUIET = "--quiet" in sys.argv
+if JSON_MODE:
+    sys.argv = [a for a in sys.argv if a != "--json"]
+if QUIET:
+    sys.argv = [a for a in sys.argv if a != "--quiet"]
+
+# Cached player id (avoids re-querying players/all every command)
+_PLAYER_CACHE = os.path.expanduser("~/.hermes/cache/ma_player.cache")
+def _cache_player(pid):
+    try:
+        os.makedirs(os.path.dirname(_PLAYER_CACHE), exist_ok=True)
+        with open(_PLAYER_CACHE, "w") as f:
+            f.write(pid)
+    except Exception:
+        pass
+def _cached_player():
+    try:
+        if os.path.exists(_PLAYER_CACHE):
+            v = open(_PLAYER_CACHE).read().strip()
+            if v:
+                return v
+    except Exception:
+        pass
+    return None
+
 
 def api_search(query: str, media_types=None, limit: int = 10):
     """Search library using the official Music Assistant client (WebSocket).
@@ -36,7 +63,7 @@ def api_search(query: str, media_types=None, limit: int = 10):
         from music_assistant_client import MusicAssistantClient
     except ImportError:
         print("Error: music-assistant-client is required for search.", file=sys.stderr)
-        print("Install with: pip install music-assistant-client", file=sys.stderr)
+        print("Install with: python3 -m pip install music-assistant-client", file=sys.stderr)
         sys.exit(1)
 
     async def _search():
@@ -76,7 +103,7 @@ def api_play_media(queue_id: str, uri: str):
         from music_assistant_client import MusicAssistantClient
     except ImportError:
         print("Error: music-assistant-client is required.", file=sys.stderr)
-        print("Install with: pip install music-assistant-client", file=sys.stderr)
+        print("Install with: python3 -m pip install music-assistant-client", file=sys.stderr)
         sys.exit(1)
 
     async def _play():
@@ -148,14 +175,18 @@ def api(cmd: str, args: dict = None) -> any:
 
 
 def get_player():
-    """Get player ID - from env or auto-detect first available."""
+    """Get player ID - from env, cache, or auto-detect first available."""
     global MA_PLAYER
     if MA_PLAYER:
         return MA_PLAYER
-    
+    cached = _cached_player()
+    if cached:
+        MA_PLAYER = cached
+        return MA_PLAYER
     players = api("players/all")
     if players and len(players) > 0:
         MA_PLAYER = players[0].get("player_id", "")
+        _cache_player(MA_PLAYER)
         return MA_PLAYER
     
     print("No players found. Make sure Music Assistant has at least one player configured.", file=sys.stderr)
@@ -166,35 +197,35 @@ def cmd_play(args):
     """Play/pause toggle."""
     player = get_player()
     api("player_queues/play_pause", {"queue_id": player})
-    print("▶️ Toggled play/pause")
+    if not QUIET: print("▶️ Toggled play/pause")
 
 
 def cmd_pause(args):
     """Pause playback."""
     player = get_player()
     api("player_queues/play_pause", {"queue_id": player})
-    print("⏸️ Paused")
+    if not QUIET: print("⏸️ Paused")
 
 
 def cmd_stop(args):
     """Stop playback."""
     player = get_player()
     api("player_queues/stop", {"queue_id": player})
-    print("⏹️ Stopped")
+    if not QUIET: print("⏹️ Stopped")
 
 
 def cmd_next(args):
     """Next track."""
     player = get_player()
     api("player_queues/next", {"queue_id": player})
-    print("⏭️ Next track")
+    if not QUIET: print("⏭️ Next track")
 
 
 def cmd_prev(args):
     """Previous track."""
     player = get_player()
     api("player_queues/previous", {"queue_id": player})
-    print("⏮️ Previous track")
+    if not QUIET: print("⏮️ Previous track")
 
 
 def cmd_volume(args):
@@ -263,6 +294,10 @@ def cmd_clear(args):
 def cmd_status(args):
     """Show player status."""
     players = api("players/all")
+    if JSON_MODE:
+        import json as _j
+        print(_j.dumps(players))
+        return
     if not players:
         print("No players found")
         return
@@ -288,6 +323,10 @@ def cmd_status(args):
 def cmd_queue(args):
     """Show queue status."""
     queues = api("player_queues/all")
+    if JSON_MODE:
+        import json as _j
+        print(_j.dumps(queues))
+        return
     if not queues:
         print("No queues found")
         return
@@ -339,6 +378,10 @@ def cmd_search(args):
 
     result = api_search(query, media_types=media_types, limit=args.limit if args.limit else 10)
 
+    if JSON_MODE:
+        import json as _j
+        print(_j.dumps(result))
+        return
     if not result:
         print(f"No results for '{query}'")
         return
@@ -396,6 +439,10 @@ def cmd_recent(args):
     limit = args.limit if args.limit else 10
     result = api("music/recently_played_items", {"limit": limit})
 
+    if JSON_MODE:
+        import json as _j
+        print(_j.dumps(result))
+        return
     if not result:
         print("No recent items")
         return
@@ -420,6 +467,10 @@ def cmd_sync(args):
 def cmd_players(args):
     """List all players."""
     players = api("players/all")
+    if JSON_MODE:
+        import json as _j
+        print(_j.dumps(players))
+        return
     if not players:
         print("No players found")
         return
