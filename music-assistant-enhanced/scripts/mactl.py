@@ -644,6 +644,33 @@ def cmd_transfer(args):
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr); sys.exit(1)
     print(f"➡️ Transferred {source} → {target}")
+def cmd_announce(args):
+    """Play an announcement (TTS message or audio URL) on the player."""
+    player = get_player()
+    message = getattr(args, "message", None)
+    if isinstance(message, list):
+        message = " ".join(message).strip() or None
+    url = getattr(args, "url", None)
+    tts_engine = getattr(args, "tts_engine", None)
+    volume = getattr(args, "volume", None)
+    import asyncio, aiohttp
+    from music_assistant_client import MusicAssistantClient
+    async def _run():
+        async with aiohttp.ClientSession() as sess:
+            client = MusicAssistantClient(MA_URL.replace("/api", ""), sess, token=MA_TOKEN)
+            await client.connect()
+            await client.players.play_announcement(
+                player, url=url, message=message, tts_engine=tts_engine,
+                volume_level=volume)
+            await client.disconnect()
+    try:
+        asyncio.run(_run())
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr); sys.exit(1)
+    if message:
+        print(f"📢 Announced: {message}")
+    else:
+        print(f"📢 Played announcement: {url}")
 def main():
     parser = argparse.ArgumentParser(
         description="Music Assistant Control CLI",
@@ -717,6 +744,12 @@ def main():
     tr_parser = subparsers.add_parser("transfer", help="Transfer playback to target player")
     tr_parser.add_argument("target", help="Target player id")
 
+    an_parser = subparsers.add_parser("announce", help="Play a TTS announcement or audio URL")
+    an_parser.add_argument("message", nargs="*", help="Message to speak (TTS)")
+    an_parser.add_argument("--url", help="Audio URL to play as announcement")
+    an_parser.add_argument("--tts-engine", dest="tts_engine", help="TTS engine id")
+    an_parser.add_argument("--volume", type=int, help="Announcement volume 0-100")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -755,6 +788,7 @@ def main():
         "group": cmd_group,
         "ungroup": cmd_ungroup,
         "transfer": cmd_transfer,
+        "announce": cmd_announce,
     }
 
     if args.command in commands:
