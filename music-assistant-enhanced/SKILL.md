@@ -50,7 +50,11 @@ python3 -m pip install music-assistant-client
 
 **IMPORTANT:** Never call the REST endpoints `music/search` or `player_queues/play_media` directly — they return HTTP 500 on many MA versions. Always use `./scripts/mactl.py` (search, play-search, play-uri), which routes through the official WebSocket client and works reliably. The official client's `music.search()` returns a `SearchResults` object with `.tracks`, `.albums`, `.artists`, `.playlists`, `.radio`, `.audiobooks`, `.podcasts` attributes (each a list); `api_search()` in `mactl.py` flattens these into a uniform list of `{name, media_type, uri}` dicts. When extending `mactl.py`, use `api_search()` rather than calling the REST endpoint directly.
 
+**Pitfall:** `mactl.py` bootstraps `sys.path` to find `music-assistant-client` because the default `python3` (Hermes subprocess) may not have it installed — it's installed under a Hermes tool python. Keep the glob bootstrap at the top of the script; removing it breaks search/play on systems where the library isn't on the default path.
+
 **Pitfall:** `music/sync` returns a list of task objects each with a `status` field (`running`/`pending`/`done`). There is no separate sync-status command — poll `music/sync` (or re-run `sync`) to track progress.
+
+**Publishing:** `hermes skills publish --to clawhub` is not yet supported (submit manually at https://clawhub.ai/submit). For GitHub, use `hermes skills publish --to github <path> --repo owner/repo` (the `--repo` flag is required).
 
 ## Quick Start
 
