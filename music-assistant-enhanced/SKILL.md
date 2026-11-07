@@ -172,6 +172,8 @@ python3 -m pip install music-assistant-client
 ./scripts/mactl.py group <target>         # Group player into target player
 ./scripts/mactl.py ungroup                # Ungroup player
 ./scripts/mactl.py transfer <target>       # Transfer playback to target player
+./scripts/mactl.py announce "Hello world"  # Speak via TTS on the player
+./scripts/mactl.py announce --url <audio_url>  # Play audio announcement
 ```
 
 ## Voice Command Examples (Hermes Gadget)
